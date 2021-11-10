@@ -11,7 +11,7 @@ func Router(router *gin.RouterGroup) {
 	{
 		messageRouter.Handle(http.MethodGet, "info", message.Message)
 		messageRouter.Handle(http.MethodPost, "info", message.Message)
-		messageRouter.POST("ticket", message.GetVerifyTicket)
+		messageRouter.GET("ticket", message.GetVerifyTicket)
 
 	}
 }
