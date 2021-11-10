@@ -9,10 +9,9 @@ import (
 func Router(router *gin.RouterGroup) {
 	messageRouter := router.Group("message")
 	{
-		messageRouter.Handle(http.MethodGet,"info",message.Message)
-		messageRouter.Handle(http.MethodPost,"info",message.Message)
-		messageRouter.POST("ticket",message.GetVerifyTicket)
-		
+		messageRouter.Handle(http.MethodGet, "info", message.Message)
+		messageRouter.Handle(http.MethodPost, "info", message.Message)
+		messageRouter.POST("ticket", message.GetVerifyTicket)
+
 	}
 }
-
