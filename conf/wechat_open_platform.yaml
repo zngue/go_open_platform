@@ -1,0 +1,7 @@
+wechatOpenPlatform:
+  Appid: wx51a1cebaa438efea
+  AppSecret: 03feecd99dcaf832d9c21e553cbfcb47
+  Token: token
+  EncodingAESKey: 6e684e2dd1fd541cc1a675aef8c0e21bd1fd541cc1a
+  VerifyTicket:
+  VerifyTime: 0
