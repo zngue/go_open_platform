@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"encoding/xml"
+	"errors"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/openplatform"
@@ -14,66 +15,54 @@ import (
 )
 
 type OpenPlatform struct {
-	config *openConfig.Config
-}
-type MessageEncrypt struct {
-	AppId string `xml:"AppId"`
-	Encrypt string `xml:"Encrypt"`
-}
-type ComponentVerifyTicketEncrypt struct {
-	ComponentVerifyTicket string `xml:"ComponentVerifyTicket"`
-}
-type Authorizer struct {
-	AuthorizerAppid string `xml:"AuthorizerAppid"`
+	config   *openConfig.Config
+	platform *openplatform.OpenPlatform
 }
 
-type NotifyThirdFasterRegister struct {
-	Status int `xml:"status"`
-	Msg string `xml:"msg"`
-	Info struct{
-		Name string `xml:"name"`
-		Code  string `xml:"code"`
-		CodeType int `xml:"code_type"`
-		LegalPersonaWechat string `xml:"legal_persona_wechat"`
-		LegalPersonaName string `xml:"legal_persona_name"`
-		ComponentPhone string `xml:"component_phone"`
-	} `xml:"info"`
-}
-
-type BaseMessageDecEncrypt struct {
-	InfoType string `xml:"InfoType"`
-	AppId string `xml:"AppId"`
-	CreateTime int64 `xml:"CreateTime"`
-	XmlByte  string
-	ComponentVerifyTicketEncrypt
-	NotifyThirdFasterRegister
-	Authorizer
-}
-
-func  (o *BaseMessageDecEncrypt) Init()  {
-	if o.InfoType=="component_verify_ticket" {
-		verifyTime := viper.GetInt64("wechatOpenPlatform.VerifyTime")
-		if verifyTime+3600*9<o.CreateTime {
-			viper.Set("wechatOpenPlatform.VerifyTicket",o.ComponentVerifyTicket)
-			viper.Set("wechatOpenPlatform.VerifyTime",o.CreateTime)
-		}
-	}
-	if len(o.XmlByte)>0 {
-		go o.SaveMessage()
-	}
-}
-func  (o *BaseMessageDecEncrypt) SaveMessage()  {
+func (o *BaseMessageDecEncrypt) SaveMessage() {
 	pkg.MysqlConn.Model(&model.MessageContent{}).Create(&model.MessageContent{
-		Content: o.XmlByte,
+		Content:    o.XmlByte,
 		CreateTime: time.Now().Unix(),
 	})
 }
+
 type IOpenPlatform interface {
 	Platform(isToken bool) *openplatform.OpenPlatform
-	DecryptMsg(message []byte) (*BaseMessageDecEncrypt,error)
+	DecryptMsg(message []byte) (*BaseMessageDecEncrypt, error)
+	GetLinkByCode(code string) (string, error)
+	AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error)
 }
 
-func (o *OpenPlatform) DecryptMsg(message []byte) (*BaseMessageDecEncrypt,error) {
+func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
+	link := o.platform.Cache.Get(code)
+	if linkUrl, ok := link.(string); ok {
+		return linkUrl, nil
+	} else {
+		return "", errors.New("not exit code link")
+	}
+}
+func (o *OpenPlatform) AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error) {
+	req.Init()
+	var link string
+	if req.IsMobile {
+		link, err = o.platform.GetBindComponentURL(req.CallbackUrl, req.AuthType, req.BizAppID)
+	} else {
+		link, err = o.platform.GetComponentLoginPage(req.CallbackUrl, req.AuthType, req.BizAppID)
+	}
+	if err != nil {
+		return
+	}
+	code := util.RandomStr(5)
+	err = o.platform.Cache.Set(code, link, time.Duration(3600)*time.Second)
+	if err != nil {
+		return
+	}
+	return &AuthLinkRsp{
+		Code: code,
+		Link: link,
+	}, nil
+}
+func (o *OpenPlatform) DecryptMsg(message []byte) (*BaseMessageDecEncrypt, error) {
 	mData := new(MessageEncrypt)
 	if err := xml.Unmarshal(message, mData); err != nil {
 		return nil, err
@@ -83,11 +72,11 @@ func (o *OpenPlatform) DecryptMsg(message []byte) (*BaseMessageDecEncrypt,error)
 	if xmlErr != nil {
 		return nil, xmlErr
 	}
-	data.XmlByte=string(xmlBytes)
+	data.XmlByte = string(xmlBytes)
 	if err := xml.Unmarshal(xmlBytes, &data); err != nil {
 		return nil, err
 	}
-	if &data!=nil {
+	if &data != nil {
 		data.Init()
 	}
 	return &data, nil
@@ -98,16 +87,16 @@ func (o *OpenPlatform) Platform(isToken bool) *openplatform.OpenPlatform {
 	if isToken {
 		verifyTicket := viper.GetString("wechatOpenPlatform.VerifyTicket")
 		token, err := platform.GetComponentAccessToken()
-		if err!=nil || token=="" {
+		if err != nil || token == "" {
 			platform.SetComponentAccessToken(verifyTicket)
 		}
 	}
 	return platform
 }
 
-func NewOpenPlatform() IOpenPlatform {
+func NewOpenPlatform(isToken bool) (IOpenPlatform, error) {
 	memory := cache.NewMemory()
-	config:=&openConfig.Config{
+	config := &openConfig.Config{
 		AppID:          viper.GetString("wechatOpenPlatform.Appid"),
 		AppSecret:      viper.GetString("wechatOpenPlatform.AppSecret"),
 		Token:          viper.GetString("wechatOpenPlatform.Token"),
@@ -115,9 +104,18 @@ func NewOpenPlatform() IOpenPlatform {
 		Cache:          memory,
 	}
 	platform := new(OpenPlatform)
-
-
-	platform.config=config
-	return platform
+	newWechat := wechat.NewWechat()
+	platforms := newWechat.GetOpenPlatform(config)
+	verifyTicket := viper.GetString("wechatOpenPlatform.VerifyTicket")
+	if isToken && verifyTicket != "" {
+		token, err := platforms.GetComponentAccessToken()
+		if err != nil || token == "" {
+			if _, errs := platforms.SetComponentAccessToken(verifyTicket); errs != nil {
+				return nil, errs
+			}
+		}
+	}
+	platform.config = config
+	platform.platform = platforms
+	return platform, nil
 }
-
