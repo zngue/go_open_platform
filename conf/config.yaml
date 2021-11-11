@@ -3,7 +3,7 @@ AppReadTimeout: 120
 AppWriteTimeout : 120
 
 
-AppPort: 6060                  # HTTP绑定端口
+AppPort: 6008                  # HTTP绑定端口
 AppTitle: 支付中心
 AppHost: 127.0.0.1
 AppName: paymentCenter
