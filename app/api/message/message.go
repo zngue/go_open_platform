@@ -8,19 +8,18 @@ import (
 	"io/ioutil"
 )
 
-
 func Message(ctx *gin.Context) {
 	all, err := ioutil.ReadAll(ctx.Request.Body)
-	platform := wechat.NewOpenPlatform()
+	platform, err := wechat.NewOpenPlatform(false)
 	if err != nil {
 		return
 	}
-	if len(all)==0{
+	if len(all) == 0 {
 		return
 	}
 	platform.DecryptMsg(all)
-	ctx.JSON(200,"success")
+	ctx.JSON(200, "success")
 }
-func GetVerifyTicket(ctx *gin.Context)  {
-	api.Success(ctx,api.Data(viper.GetString("wechatOpenPlatform.VerifyTicket")))
+func GetVerifyTicket(ctx *gin.Context) {
+	api.Success(ctx, api.Data(viper.GetString("wechatOpenPlatform.VerifyTicket")))
 }
