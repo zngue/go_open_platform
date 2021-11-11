@@ -13,7 +13,7 @@ REDIS:
     HOST: 127.0.0.1
     PASSWORD:
     PORT: 6379
-    DBNUM: 9
+    DBNUM: 10
     DialTimeout: 10
     ReadTimeout: 30
     WriteTimeout: 30
