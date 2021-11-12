@@ -22,8 +22,9 @@ type OpenPlatform struct {
 
 func (o *BaseMessageDecEncrypt) SaveMessage() {
 	pkg.MysqlConn.Model(&model.MessageContent{}).Create(&model.MessageContent{
-		Content:    o.XmlByte,
-		CreateTime: time.Now().Unix(),
+		Content:       o.XmlByte,
+		CreateTime:    time.Now().Unix(),
+		OriginContent: o.OriginXml,
 	})
 }
 
@@ -74,6 +75,7 @@ func (o *OpenPlatform) DecryptMsg(message []byte) (*BaseMessageDecEncrypt, error
 		return nil, xmlErr
 	}
 	data.XmlByte = string(xmlBytes)
+	data.OriginXml = string(message)
 	if err := xml.Unmarshal(xmlBytes, &data); err != nil {
 		return nil, err
 	}
