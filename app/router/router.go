@@ -16,11 +16,10 @@ func Router(router *gin.RouterGroup) {
 
 	}
 	authRouter := router.Group("auth")
-
 	{
 		authRouter.GET("codeLink", auth.AuthLink)
 		authRouter.GET("link", auth.AuthLinkByCode)
-
+		authRouter.GET("authorization", auth.Authorization)
 	}
 
 }

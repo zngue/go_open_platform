@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zngue/go_helper/pkg/api"
 	"github.com/zngue/go_open_platform/app/wechat"
@@ -40,6 +41,23 @@ func AuthLinkByCode(ctx *gin.Context) {
 	}
 	byCode, errs := platform.GetLinkByCode(code)
 	api.DataWithErr(ctx, errs, byCode)
+	return
+}
+func Authorization(ctx *gin.Context) {
+	authCode := ctx.DefaultQuery("auth_code", "")
+	expiresIn := ctx.DefaultQuery("expires_in", "")
+	fmt.Println(expiresIn)
+	if len(authCode) == 0 {
+		api.Error(ctx, api.Msg("参数错误"))
+		return
+	}
+	platform, err := wechat.NewOpenPlatform(true)
+	if err != nil {
+		api.DataWithErr(ctx, err, nil)
+		return
+	}
+	err = platform.AccountInfo(authCode)
+	api.DataWithErr(ctx, err, nil)
 	return
 
 }

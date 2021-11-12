@@ -33,6 +33,7 @@ type IOpenPlatform interface {
 	DecryptMsg(message []byte) (*BaseMessageDecEncrypt, error)
 	GetLinkByCode(code string) (string, error)
 	AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error)
+	AccountInfo(authCode string) error
 }
 
 func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
@@ -64,6 +65,44 @@ func (o *OpenPlatform) AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err
 		Link: link,
 	}, nil
 }
+func (o *OpenPlatform) AccountInfo(authCode string) error {
+	authInfo, err := o.platform.QueryAuthCode(authCode)
+	if err != nil {
+		return err
+	}
+	info, baseInfo, errps := o.platform.GetAuthrInfo(authInfo.Appid)
+	if errps != nil {
+		return errps
+	}
+	dbCtx := pkg.MysqlConn.Model(&model.OfficialAccount{})
+	var num int64
+	errs := dbCtx.Where("appid = ?", baseInfo.Appid).Count(&num).Error
+	if errs != nil {
+		return errs
+	}
+	data := model.OfficialAccount{
+		NickName:        info.NickName,
+		Appid:           baseInfo.Appid,
+		HeadImg:         info.HeadImg,
+		ServiceTypeInfo: info.ServiceTypeInfo.ID,
+		VerifyTypeInfo:  info.VerifyTypeInfo.ID,
+		UserName:        info.UserName,
+		PrincipalName:   info.PrincipalName,
+		OpenStore:       info.BusinessInfo.OpenStore,
+		OpenScan:        info.BusinessInfo.OpenScan,
+		OpenPay:         info.BusinessInfo.OpenPay,
+		OpenCard:        info.BusinessInfo.OpenCard,
+		OpenShake:       info.BusinessInfo.OpenShake,
+	}
+	var dbErr error
+	if num > 0 {
+		dbErr = dbCtx.Where("appid = ?", baseInfo.Appid).Updates(&data).Error
+	} else {
+		dbErr = dbCtx.Create(&data).Error
+	}
+	return dbErr
+}
+
 func (o *OpenPlatform) DecryptMsg(message []byte) (*BaseMessageDecEncrypt, error) {
 	mData := new(MessageEncrypt)
 	if err := xml.Unmarshal(message, mData); err != nil {
