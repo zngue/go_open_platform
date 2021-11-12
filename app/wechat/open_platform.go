@@ -46,7 +46,7 @@ func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
 	}
 }
 func (o *OpenPlatform) DaiLiAuth() (string, error) {
-	officialAccount := o.platform.GetOfficialAccount("wx70710fe36c1a61f1")
+	officialAccount := o.platform.GetOfficialAccount("wx0372cdfcefa08b99")
 	oauth := officialAccount.GetOauth()
 	url := "https://api.zngue.com/authorization.php"
 	return oauth.GetRedirectURL(url, "snsapi_userinfo", "STATE")
