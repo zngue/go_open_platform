@@ -3,6 +3,7 @@ package wechat
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/openplatform"
@@ -109,8 +110,11 @@ func NewOpenPlatform(isToken bool) (IOpenPlatform, error) {
 	verifyTicket := viper.GetString("wechatOpenPlatform.VerifyTicket")
 	if isToken && verifyTicket != "" {
 		token, err := platforms.GetComponentAccessToken()
+		fmt.Println("token get", token)
+		fmt.Println("token err", err)
 		if err != nil || token == "" {
-			if _, errs := platforms.SetComponentAccessToken(verifyTicket); errs != nil {
+			_, errs := platforms.SetComponentAccessToken(verifyTicket)
+			if errs != nil {
 				return nil, errs
 			}
 		}

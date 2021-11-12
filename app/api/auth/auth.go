@@ -8,8 +8,8 @@ import (
 )
 
 func AuthLink(ctx *gin.Context) {
-	req := wechat.AuthLinkRequest{}
-	if err := ctx.ShouldBind(&req); err != nil {
+	req := &wechat.AuthLinkRequest{}
+	if err := ctx.ShouldBind(req); err != nil {
 		api.DataWithErr(ctx, err, nil)
 		return
 	}
@@ -22,7 +22,7 @@ func AuthLink(ctx *gin.Context) {
 		api.DataWithErr(ctx, err, nil)
 		return
 	}
-	auth, errs := platform.AuthLink(&req)
+	auth, errs := platform.AuthLink(req)
 	api.DataWithErr(ctx, errs, auth)
 	return
 }
