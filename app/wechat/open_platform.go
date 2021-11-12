@@ -108,6 +108,7 @@ func NewOpenPlatform(isToken bool) (IOpenPlatform, error) {
 	newWechat := wechat.NewWechat()
 	platforms := newWechat.GetOpenPlatform(config)
 	verifyTicket := viper.GetString("wechatOpenPlatform.VerifyTicket")
+	fmt.Println("verifyTicket", verifyTicket)
 	if isToken && verifyTicket != "" {
 		token, err := platforms.GetComponentAccessToken()
 		fmt.Println("token get", token)
