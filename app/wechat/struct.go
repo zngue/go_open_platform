@@ -5,8 +5,8 @@ import "github.com/spf13/viper"
 type AuthLinkRequest struct {
 	CallbackUrl string `form:"callback_url" json:"callback_url"`
 	AuthType    int    `json:"auth_type" form:"auth_type"`
-	BizAppID    string
-	IsMobile    bool
+	BizAppID    string `form:"auth_type"`
+	IsMobile    bool   `form:"is_mobile"`
 }
 type AuthLinkRsp struct {
 	Code string `json:"code"`
@@ -47,6 +47,7 @@ type BaseMessageDecEncrypt struct {
 	AppId      string `xml:"AppId"`
 	CreateTime int64  `xml:"CreateTime"`
 	XmlByte    string
+	OriginXml  string
 	ComponentVerifyTicketEncrypt
 	NotifyThirdFasterRegister
 	Authorizer
