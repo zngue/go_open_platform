@@ -34,6 +34,7 @@ type IOpenPlatform interface {
 	GetLinkByCode(code string) (string, error)
 	AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error)
 	AccountInfo(authCode string) error
+	DaiLiAuth() (string, error)
 }
 
 func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
@@ -44,6 +45,13 @@ func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
 		return "", errors.New("not exit code link")
 	}
 }
+func (o *OpenPlatform) DaiLiAuth() (string, error) {
+	officialAccount := o.platform.GetOfficialAccount("wx70710fe36c1a61f1")
+	oauth := officialAccount.GetOauth()
+	url := "https://api.zngue.com/authorization.php"
+	return oauth.GetRedirectURL(url, "snsapi_userinfo", "STATE")
+}
+
 func (o *OpenPlatform) AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error) {
 	req.Init()
 	var link string

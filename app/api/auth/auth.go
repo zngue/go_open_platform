@@ -61,3 +61,14 @@ func Authorization(ctx *gin.Context) {
 	return
 
 }
+func WebAuthorization(ctx *gin.Context) {
+	platform, err := wechat.NewOpenPlatform(true)
+	if err != nil {
+		api.DataWithErr(ctx, err, nil)
+		return
+	}
+	daiLiAuth, errs := platform.DaiLiAuth()
+	api.DataWithErr(ctx, errs, daiLiAuth)
+	return
+
+}
