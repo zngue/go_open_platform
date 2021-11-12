@@ -20,7 +20,7 @@ func Router(router *gin.RouterGroup) {
 		authRouter.GET("codeLink", auth.AuthLink)
 		authRouter.GET("link", auth.AuthLinkByCode)
 		authRouter.GET("authorization", auth.Authorization)
-		authRouter.GET("Webauthorization", auth.WebAuthorization)
+		authRouter.GET("webAuthorization", auth.WebAuthorization)
 	}
 
 }
