@@ -1,17 +1,22 @@
 package wechat
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/silenceper/wechat/v2/openplatform"
 	openConfig "github.com/silenceper/wechat/v2/openplatform/config"
 	"github.com/silenceper/wechat/v2/util"
 	"github.com/spf13/viper"
 	"github.com/zngue/go_helper/pkg"
 	"github.com/zngue/go_open_platform/app/model"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -35,6 +40,7 @@ type IOpenPlatform interface {
 	AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error)
 	AccountInfo(authCode string) error
 	DaiLiAuth() (string, error)
+	Open(ctx *gin.Context,appid string)
 }
 
 func (o *OpenPlatform) GetLinkByCode(code string) (string, error) {
@@ -49,7 +55,31 @@ func (o *OpenPlatform) DaiLiAuth() (string, error) {
 	officialAccount := o.platform.GetOfficialAccount("wx0372cdfcefa08b99")
 	oauth := officialAccount.GetOauth()
 	url := "https://api.zngue.com/authorization.php"
-	return oauth.GetRedirectURL(url, "snsapi_userinfo", "STATE")
+	return oauth.GetRedirectURL(url, "snsapi_userinfo", "STATE&")
+}
+
+func (o *OpenPlatform) Open(ctx *gin.Context,appid string){
+
+	server := o.platform.GetOfficialAccount(appid).GetServer(ctx.Request, ctx.Writer)
+	server.SetMessageHandler(func(mixMessage *message.MixMessage) *message.Reply {
+
+		reply := &message.Reply{
+			MsgType: message.MsgTypeText,
+			MsgData: message.NewText("您好请问有什么可以帮你！"),
+		}
+		return reply
+		return nil
+	})
+	if err := server.Serve(); err != nil {
+		fmt.Println(err)
+		return
+	}
+	if err := server.Send(); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+
 }
 
 func (o *OpenPlatform) AuthLink(req *AuthLinkRequest) (authLin *AuthLinkRsp, err error) {
@@ -144,6 +174,31 @@ func (o *OpenPlatform) Platform(isToken bool) *openplatform.OpenPlatform {
 	return platform
 }
 
+type Tick struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data string `json:"data"`
+}
+
+func GetToken() (string,error) {
+	response, err := http.Get("https://api.zngue.com/platform/message/ticket")
+	if err != nil {
+		return "", err
+	}
+	all, errs := ioutil.ReadAll(response.Body)
+	if errs != nil {
+		return "", errs
+	}
+	var ts Tick
+	if errsok := json.Unmarshal(all, &ts); errsok != nil {
+		return "", errsok
+	}
+	if ts.Code==200 {
+		return ts.Data,nil
+	}
+	return "",errors.New(ts.Msg)
+}
+
 func NewOpenPlatform(isToken bool) (IOpenPlatform, error) {
 	memory := cache.NewMemory()
 	config := &openConfig.Config{
@@ -157,11 +212,11 @@ func NewOpenPlatform(isToken bool) (IOpenPlatform, error) {
 	newWechat := wechat.NewWechat()
 	platforms := newWechat.GetOpenPlatform(config)
 	verifyTicket := viper.GetString("wechatOpenPlatform.VerifyTicket")
-	fmt.Println("verifyTicket", verifyTicket)
+	if len(verifyTicket)==0 {
+		verifyTicket, _ = GetToken()
+	}
 	if isToken && verifyTicket != "" {
 		token, err := platforms.GetComponentAccessToken()
-		fmt.Println("token get", token)
-		fmt.Println("token err", err)
 		if err != nil || token == "" {
 			_, errs := platforms.SetComponentAccessToken(verifyTicket)
 			if errs != nil {

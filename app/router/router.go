@@ -13,7 +13,8 @@ func Router(router *gin.RouterGroup) {
 		messageRouter.Handle(http.MethodGet, "info", message.Message)
 		messageRouter.Handle(http.MethodPost, "info", message.Message)
 		messageRouter.GET("ticket", message.GetVerifyTicket)
-
+		messageRouter.GET("/token/:appid/callback", message.Token)
+		messageRouter.GET("parse", message.Parse)
 	}
 	authRouter := router.Group("auth")
 	{
@@ -22,5 +23,4 @@ func Router(router *gin.RouterGroup) {
 		authRouter.GET("authorization", auth.Authorization)
 		authRouter.GET("webAuthorization", auth.WebAuthorization)
 	}
-
 }

@@ -70,5 +70,4 @@ func WebAuthorization(ctx *gin.Context) {
 	daiLiAuth, errs := platform.DaiLiAuth()
 	api.DataWithErr(ctx, errs, daiLiAuth)
 	return
-
 }
