@@ -62,13 +62,11 @@ func (o *OpenPlatform) Open(ctx *gin.Context,appid string){
 
 	server := o.platform.GetOfficialAccount(appid).GetServer(ctx.Request, ctx.Writer)
 	server.SetMessageHandler(func(mixMessage *message.MixMessage) *message.Reply {
-
 		reply := &message.Reply{
 			MsgType: message.MsgTypeText,
 			MsgData: message.NewText("您好请问有什么可以帮你！"),
 		}
 		return reply
-		return nil
 	})
 	if err := server.Serve(); err != nil {
 		fmt.Println(err)
