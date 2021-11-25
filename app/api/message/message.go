@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/zngue/go_helper/pkg/api"
-	"github.com/zngue/go_open_platform/app/service"
 	"github.com/zngue/go_open_platform/app/wechat"
 	"io/ioutil"
 )
@@ -33,6 +32,7 @@ func Token(ctx *gin.Context) {
 		api.Error(ctx,api.Msg("account id is null "))
 		return
 	}
+	/*
 	var req service.OfficialAccountRequest
 	req.Appid=appid
 	account, err3 := service.NewOfficialAccount().Detail(&req)
@@ -43,8 +43,13 @@ func Token(ctx *gin.Context) {
 	platform, err := wechat.NewOpenPlatform(true)
 	if err != nil {
 		return
+	}*/
+	platform, err := wechat.NewOpenPlatform(true)
+	if err != nil {
+		ctx.JSON(200,"success")
+		return
 	}
-	platform.Open(ctx,account.Appid)
+	platform.Open(ctx,appid)
 	ctx.JSON(200,"success")
 
 }
