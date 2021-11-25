@@ -64,7 +64,7 @@ func (o *OpenPlatform) Open(ctx *gin.Context,appid string){
 	server.SetMessageHandler(func(mixMessage *message.MixMessage) *message.Reply {
 		reply := &message.Reply{
 			MsgType: message.MsgTypeText,
-			MsgData: message.NewText("您好请问有什么可以帮你！"),
+			MsgData: message.NewText("TESTCOMPONENT_MSG_TYPE_TEXT_callback"),
 		}
 		return reply
 	})
